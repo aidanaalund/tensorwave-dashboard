@@ -19,11 +19,11 @@ export default function Home() {
             // className="dark:invert"
             src="/logo.svg"
             alt="TensorWave logo"
-            width={300}
-            height={60}
+            width={200}
+            height={40}
             priority
           />
-          <h1 className="ml-0 font-barlow text-3xl leading-10 tracking-tight text-secondary dark:text-zinc-50">
+          <h1 className="ml-4 font-barlow text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
             stocks
           </h1>
         </div>
