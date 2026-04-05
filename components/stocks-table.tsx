@@ -14,7 +14,6 @@ export async function StocksTable() {
 
   return (
     <Table>
-      <TableCaption>Data is from the AlphaVantage API. Not affiliated with TensorWave.</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[56px] border-r border-white/15">Logo</TableHead>

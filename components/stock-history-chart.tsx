@@ -13,6 +13,11 @@ const CHART_Y_AXIS_WIDTH = 72;
 const CHART_LEFT_PADDING = 20;
 const CHART_RIGHT_PADDING = 20;
 const TRACKER_LEFT_NUDGE = 18;
+const MOBILE_BREAKPOINT = 640;
+const MOBILE_CHART_Y_AXIS_WIDTH = 72;
+const MOBILE_CHART_LEFT_PADDING = 12;
+const MOBILE_CHART_RIGHT_PADDING = 12;
+const MOBILE_TRACKER_LEFT_NUDGE = 12;
 
 type TrackerBlock = {
   color: Color;
@@ -96,6 +101,7 @@ function buildTrackerData(chartData: ChartPoint[]): TrackerBlock[] {
 
 export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
   const [isReady, setIsReady] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const data = useMemo(() => buildChartData(history), [history]);
   const trackerData = useMemo(() => buildTrackerData(data), [data]);
   const firstClose = data[0]?.close;
@@ -104,15 +110,19 @@ export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
     Number.isFinite(firstClose) && Number.isFinite(lastClose) && lastClose < firstClose
       ? "rose"
       : "lime";
+  const chartYAxisWidth = isMobileViewport ? MOBILE_CHART_Y_AXIS_WIDTH : CHART_Y_AXIS_WIDTH;
+  const chartLeftPadding = isMobileViewport ? MOBILE_CHART_LEFT_PADDING : CHART_LEFT_PADDING;
+  const chartRightPadding = isMobileViewport ? MOBILE_CHART_RIGHT_PADDING : CHART_RIGHT_PADDING;
+  const trackerLeftNudge = isMobileViewport ? MOBILE_TRACKER_LEFT_NUDGE : TRACKER_LEFT_NUDGE;
   const chartColors: Color[] = [chartColor];
   const chartColorClasses = getAreaColorClasses(chartColor);
   const trackerInsetStyle = {
-    paddingLeft: `${CHART_Y_AXIS_WIDTH + CHART_LEFT_PADDING + TRACKER_LEFT_NUDGE}px`,
-    paddingRight: `${CHART_RIGHT_PADDING}px`,
+    paddingLeft: `${chartYAxisWidth + chartLeftPadding + trackerLeftNudge}px`,
+    paddingRight: `${chartRightPadding}px`,
   };
   const overlayPlotInsetStyle = {
-    left: `${CHART_Y_AXIS_WIDTH + CHART_LEFT_PADDING}px`,
-    right: `${CHART_RIGHT_PADDING}px`,
+    left: `${chartYAxisWidth + chartLeftPadding}px`,
+    right: `${chartRightPadding}px`,
     top: "5px",
     bottom: "26px",
   };
@@ -120,6 +130,16 @@ export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
   useEffect(() => {
     const id = window.setTimeout(() => setIsReady(true), 450);
     return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobileViewport(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
   }, []);
 
   if (!isReady) {
@@ -133,7 +153,7 @@ export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
       </p>
       <div className="relative isolate overflow-hidden rounded-xl bg-[rgba(7,16,40,0.82)]">
         <AreaChart
-          className={`h-64 text-slate-100 [&_.recharts-cartesian-axis-tick-value]:fill-slate-100 [&_.recharts-cartesian-axis-line]:stroke-white/20 [&_.recharts-cartesian-grid-horizontal_line]:stroke-white/10 ${chartColorClasses}`}
+          className={`h-72 sm:h-64 text-slate-100 [&_.recharts-cartesian-axis-tick-value]:fill-slate-100 [&_.recharts-cartesian-axis-line]:stroke-white/20 [&_.recharts-cartesian-grid-horizontal_line]:stroke-white/10 ${chartColorClasses}`}
           data={data}
           index="date"
           categories={["close"]}
@@ -141,8 +161,8 @@ export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
           valueFormatter={currencyFormatter}
           colors={chartColors}
           showGridLines={true}
-          yAxisWidth={72}
-          yAxisLabel={"Closing Price ($ USD)"}
+          yAxisWidth={chartYAxisWidth}
+          yAxisLabel={isMobileViewport ? undefined : "Closing Price ($ USD)"}
           showAnimation
         />
         <div
@@ -161,14 +181,15 @@ export function StockHistoryChart({ history }: { history: HistoricalPrice[] }) {
         <div
           className="pointer-events-none absolute z-20 border-r border-dashed border-cyan-200/70"
           style={{
-            right: `${CHART_RIGHT_PADDING}px`,
+            right: `${chartRightPadding}px`,
             top: "5px",
             bottom: "26px",
           }}
         />
         {Number.isFinite(lastClose) && (
           <div
-            className="pointer-events-none absolute right-5 top-2 z-20 rounded border border-cyan-200/50 bg-black/55 px-1.5 py-0.5 text-[11px] text-cyan-100"
+            className="pointer-events-none absolute top-2 z-20 rounded border border-cyan-200/50 bg-black/55 px-1.5 py-0.5 text-[11px] text-cyan-100"
+            style={{ right: `${Math.max(10, chartRightPadding)}px` }}
           >
             ${lastClose.toFixed(2)}
           </div>

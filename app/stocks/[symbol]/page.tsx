@@ -110,8 +110,8 @@ export default async function StockDetailsPage({
       />
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.16),transparent_48%)]" aria-hidden />
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <div className="flex items-center justify-between rounded-2xl border border-cyan-300/20 bg-[rgba(5,12,30,0.88)] px-5 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 rounded-2xl border border-cyan-300/20 bg-[rgba(5,12,30,0.88)] px-5 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-3">
             <Image src="/logo.svg" alt="TensorWave logo" width={180} height={34} />
             <h1 className="text-xl font-light tracking-[0.28em] text-violet-300 md:text-2xl">
               STOCKS
@@ -119,7 +119,7 @@ export default async function StockDetailsPage({
           </div>
           <Link
             href="/"
-            className="relative overflow-hidden rounded-full border border-cyan-200/60 px-4 py-2 text-xs uppercase tracking-[0.16em] text-cyan-50 transition hover:border-cyan-100 hover:text-white"
+            className="relative self-start overflow-hidden rounded-full border border-cyan-200/60 px-4 py-2 text-xs uppercase tracking-[0.16em] text-cyan-50 transition hover:border-cyan-100 hover:text-white md:self-auto"
           >
             <span
               className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(165,243,252,0.82),rgba(34,211,238,0.90))]"
