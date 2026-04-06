@@ -21,13 +21,16 @@ function buildPreviewData(stock: StockData): PreviewPoint[] {
   const safeBase = Number.isFinite(basePrice) ? basePrice : 100;
   const drift = Number.isFinite(changeValue) ? changeValue : 0;
 
-  const generated = Array.from({ length: 12 }, (_, index) => {
+  const generatedFallback = Array.from({ length: 12 }, (_, index) => {
     const wave = Math.sin((index + symbolSeed) * 0.9) * (safeBase * 0.008);
     const trend = (index - 5.5) * drift * 0.065;
     const price = Math.max(1, safeBase + wave + trend);
 
     return Number(price.toFixed(2));
   });
+
+  const rawSeries = stock.sparklineCloses?.length ? stock.sparklineCloses : generatedFallback;
+  const generated = rawSeries.slice(-12);
 
   return generated.map((price, index) => {
     const previous = index > 0 ? generated[index - 1] : price;
@@ -80,7 +83,14 @@ export function StockRow({ stock }: { stock: StockData }) {
       <TableCell className="font-medium">{stock.symbol}</TableCell>
       <TableCell>
         <div className="flex items-center gap-4">
-          <div>{stock.name}</div>
+          <div className="flex items-center gap-2">
+            <span>{stock.name}</span>
+            {stock.isDelayed && (
+              <span className="rounded border border-amber-300/30 bg-amber-300/15 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] text-amber-100/90">
+                Delayed
+              </span>
+            )}
+          </div>
           <div className="h-8 w-[48px] rounded bg-background/30 p-1">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={previewData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>

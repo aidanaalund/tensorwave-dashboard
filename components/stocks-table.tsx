@@ -11,6 +11,7 @@ import { StockRow } from "./stock-row";
 
 export async function StocksTable() {
   const stocks = await fetchAllStocks();
+  const hasDelayedRows = stocks.some((stock) => stock.isDelayed);
 
   return (
     <Table>
@@ -32,6 +33,11 @@ export async function StocksTable() {
           <StockRow key={stock.symbol} stock={stock} />
         ))}
       </TableBody>
+      {hasDelayedRows && (
+        <TableCaption className="pt-3 text-left text-xs text-amber-100/80">
+          Delayed indicates fallback quote data due to API rate limits.
+        </TableCaption>
+      )}
     </Table>
   );
 }

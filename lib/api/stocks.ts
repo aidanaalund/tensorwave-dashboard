@@ -8,6 +8,8 @@ export interface StockData {
   marketCap?: string;
   exchange?: string;
   logoUrl?: string;
+  isDelayed?: boolean;
+  sparklineCloses?: number[];
 }
 
 export interface StockOverview {
@@ -170,11 +172,22 @@ function buildMockHistory(symbol: string): HistoricalPrice[] {
   return rows;
 }
 
+function buildSparklineCloses(history: HistoricalPrice[], points = 12): number[] {
+  if (!history.length) return [];
+
+  return [...history]
+    .slice(0, points)
+    .reverse()
+    .map((entry) => toNumber(entry.close, Number.NaN))
+    .filter((value) => Number.isFinite(value));
+}
+
 async function fetchAlphaVantage(
   params: URLSearchParams,
   revalidateSeconds = DEFAULT_REVALIDATE_SECONDS,
 ): Promise<Record<string, unknown> | null> {
-  const apiKey = process.env.ALPHAVANTAGE_API_KEY || "demo";
+  const apiKey =
+    process.env.ALPHA_VANTAGE_API_KEY || process.env.ALPHAVANTAGE_API_KEY || "demo";
   params.set("apikey", apiKey);
 
   try {
@@ -357,24 +370,45 @@ export async function fetchStockDetails(symbol: string): Promise<StockDetailsDat
  */
 export async function fetchAllStocks(): Promise<StockData[]> {
   if (SHOULD_USE_MOCK_DATA) {
-    return TARGET_STOCKS.map((stock) => buildMockQuote(stock.symbol));
+    return TARGET_STOCKS.map((stock) => ({
+      ...buildMockQuote(stock.symbol),
+      sparklineCloses: buildSparklineCloses(buildMockHistory(stock.symbol)),
+    }));
   }
 
-  const promises = TARGET_STOCKS.map((stock) => fetchStockQuote(stock.symbol));
+  const promises = TARGET_STOCKS.map(async (stock) => {
+    const [quote, history] = await Promise.all([
+      fetchStockQuote(stock.symbol),
+      fetchDailySeries(stock.symbol),
+    ]);
+
+    return {
+      symbol: stock.symbol,
+      quote,
+      history,
+    };
+  });
+
   const results = await Promise.all(promises);
 
-  return results.map((result, index) => {
-    if (result) return result;
+  return results.map((result) => {
+    const sparklineCloses =
+      result.history.length > 0
+        ? buildSparklineCloses(result.history)
+        : buildSparklineCloses(buildMockHistory(result.symbol));
+
+    if (result.quote) {
+      return {
+        ...result.quote,
+        sparklineCloses,
+      };
+    }
+
+    // When API quota/rate limits hit, keep the homepage populated with deterministic fallback rows.
     return {
-      symbol: TARGET_STOCKS[index].symbol,
-      name: TARGET_STOCKS[index].name,
-      price: "N/A",
-      change: "N/A",
-      changePercent: "N/A",
-      volume: "N/A",
-      marketCap: "N/A",
-      exchange: "N/A",
-      logoUrl: resolveLogoUrl(TARGET_STOCKS[index].symbol),
+      ...buildMockQuote(result.symbol),
+      isDelayed: true,
+      sparklineCloses,
     };
   });
 }
